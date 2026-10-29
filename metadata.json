@@ -1,0 +1,6 @@
+{
+  "name": "Apollo Clinic Basaveshwar Nagar - Premium Appointment Booking",
+  "description": "Book doctor consultations and diagnostic appointments online at Apollo Clinic, Basaveshwar Nagar, Bengaluru.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
