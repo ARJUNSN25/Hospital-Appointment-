@@ -37,32 +37,32 @@ export default function ServicesPage() {
   }, [services, category, search]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-[#F8FAFC] text-[#0F172A]">
       {/* Header */}
-      <div className="border-b border-slate-200 pb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-semibold border border-teal-200 mb-2">
+      <div className="border-b border-[#E2E8F0] pb-6">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#2563EB] text-xs font-semibold border border-blue-200 mb-2">
           <Activity className="w-3.5 h-3.5" />
           Verified Clinical & Diagnostic Services
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-          Services at Apollo Clinic Basaveshwar Nagar
+        <h1 className="text-3xl font-extrabold text-[#0F172A] tracking-tight">
+          Services at LifeCare Hospital Basaveshwar Nagar
         </h1>
-        <p className="text-slate-600 text-sm mt-1 max-w-3xl">
-          Multi-specialty outpatient consultations, precision pathology diagnostics, ultrasound, and comprehensive Apollo ProHealth packages under one roof.
+        <p className="text-[#64748B] text-sm mt-1 max-w-3xl">
+          Multi-specialty outpatient consultations, precision pathology diagnostics, ultrasound, and comprehensive preventive health packages under one roof.
         </p>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-[#FFFFFF] p-4 rounded-xl border border-[#E2E8F0] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
           <div className="relative w-full sm:max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+            <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-3.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search services, ultrasound, ECG, checkups..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-[#E2E8F0] bg-[#FFFFFF] text-[#0F172A] rounded-lg focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
             />
           </div>
 
@@ -73,8 +73,8 @@ export default function ServicesPage() {
                 onClick={() => setCategory(c.id)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                   category === c.id
-                    ? 'bg-sky-700 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#2563EB] text-white'
+                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-slate-100 hover:text-[#0F172A]'
                 }`}
               >
                 {c.label}
@@ -88,14 +88,14 @@ export default function ServicesPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-56 bg-slate-100 rounded-xl animate-pulse"></div>
+            <div key={i} className="h-56 bg-[#FFFFFF] border border-[#E2E8F0] rounded-xl animate-pulse"></div>
           ))}
         </div>
       ) : filteredServices.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200 p-8">
-          <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-slate-900">No services match your criteria</h3>
-          <p className="text-sm text-slate-500 mt-1">Try resetting your search or category filter.</p>
+        <div className="text-center py-16 bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] p-8">
+          <Activity className="w-12 h-12 text-[#64748B] mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-[#0F172A]">No services match your criteria</h3>
+          <p className="text-sm text-[#64748B] mt-1">Try resetting your search or category filter.</p>
           <div className="mt-4">
             <Button
               variant="outline"
@@ -114,41 +114,41 @@ export default function ServicesPage() {
           {filteredServices.map((srv) => (
             <div
               key={srv.id}
-              className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+              className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                     {srv.specialityName}
                   </span>
-                  <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <div className="flex items-center gap-1 text-xs text-[#64748B] font-medium">
+                    <Clock className="w-3.5 h-3.5 text-[#64748B]" />
                     <span>{srv.durationMinutes} mins</span>
                   </div>
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 mb-2 leading-snug">
+                <h3 className="text-base font-bold text-[#0F172A] mb-2 leading-snug">
                   {srv.name}
                 </h3>
 
-                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                <p className="text-xs text-[#64748B] leading-relaxed mb-4">
                   {srv.description}
                 </p>
 
                 {srv.preparationInstructions && (
-                  <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-200 text-[11px] text-amber-900 mb-4 flex items-start gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-[#0F172A] mb-4 flex items-start gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#2563EB] shrink-0 mt-0.5" />
                     <span><strong>Prep:</strong> {srv.preparationInstructions}</span>
                   </div>
                 )}
               </div>
 
               <div>
-                <div className="flex items-center justify-between text-xs py-2.5 px-3 bg-slate-50 rounded-lg border border-slate-100 mb-4">
-                  <span className="text-slate-500">Service Fee</span>
+                <div className="flex items-center justify-between text-xs py-2.5 px-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] mb-4">
+                  <span className="text-[#64748B]">Service Fee</span>
                   <div className="text-right">
-                    <span className="font-bold text-slate-900 text-sm">₹{srv.price}</span>
-                    <span className="text-[10px] text-emerald-700 block font-medium">Verified by Clinic</span>
+                    <span className="font-bold text-[#0F172A] text-sm">₹{srv.price}</span>
+                    <span className="text-[10px] text-[#2563EB] block font-medium">Verified by Clinic</span>
                   </div>
                 </div>
 

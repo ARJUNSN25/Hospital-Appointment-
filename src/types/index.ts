@@ -1,6 +1,6 @@
 export type UserRole = 'patient' | 'admin' | 'staff' | 'doctor';
 
-export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'rejected' | 'rescheduled';
+export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'rejected' | 'rescheduled' | 'waiting' | 'in-consultation' | 'no-show';
 
 export interface UserProfile {
   id: string;
@@ -33,6 +33,7 @@ export interface Doctor {
   about: string;
   availableDays: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
   active: boolean;
+  opdStatus?: 'available' | 'in-consultation' | 'break' | 'off-duty';
   preparationNotes?: string;
   rating?: number;
   reviewCount?: number;
@@ -129,7 +130,11 @@ export interface AdminDashboardStats {
   confirmedAppointments: number;
   cancelledAppointments: number;
   completedAppointments: number;
+  waitingCount?: number;
+  inConsultationCount?: number;
+  noShowCount?: number;
   revenueEstimated: number;
+  todayRevenueEstimated?: number;
   revenueOnline?: number;
   revenueCash?: number;
   onlineCount?: number;
@@ -138,7 +143,7 @@ export interface AdminDashboardStats {
   activeServicesCount: number;
   specialityBreakdown?: { speciality: string; count: number; percentage: number }[];
   hourlyDistribution?: { hour: string; count: number }[];
-  doctorWorkload?: { doctorId: string; doctorName: string; speciality: string; bookedCount: number; active: boolean }[];
+  doctorWorkload?: { doctorId: string; doctorName: string; speciality: string; bookedCount: number; active: boolean; opdStatus?: string }[];
 }
 
 export interface AdminAuditLog {
@@ -149,4 +154,12 @@ export interface AdminAuditLog {
   performedBy: string;
   details: string;
   createdAt: string;
+}
+
+export interface ClinicBroadcast {
+  message: string;
+  type: 'info' | 'warning' | 'urgent';
+  active: boolean;
+  updatedAt: string;
+  updatedBy: string;
 }

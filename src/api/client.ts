@@ -1,4 +1,4 @@
-import { Appointment, ClinicService, Doctor, AdminDashboardStats, AdminAuditLog } from '../types';
+import { Appointment, ClinicService, Doctor, AdminDashboardStats, AdminAuditLog, ClinicBroadcast } from '../types';
 import { ClinicConfig } from '../config/clinicData';
 
 const BASE_URL = '/api/v1';
@@ -162,10 +162,30 @@ export const api = {
       body: JSON.stringify(doctor)
     }),
 
+  updateService: (id: string, updates: Partial<ClinicService>) =>
+    fetchJson<ClinicService>(`${BASE_URL}/admin/services/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    }),
+
+  addService: (service: Partial<ClinicService>) =>
+    fetchJson<ClinicService>(`${BASE_URL}/admin/services`, {
+      method: 'POST',
+      body: JSON.stringify(service)
+    }),
+
   updateClinicSettings: (settings: Partial<ClinicConfig>) =>
     fetchJson<ClinicConfig>(`${BASE_URL}/admin/clinic-settings`, {
       method: 'PATCH',
       body: JSON.stringify(settings)
+    }),
+
+  getBroadcast: () => fetchJson<ClinicBroadcast>(`${BASE_URL}/broadcast`),
+
+  updateBroadcast: (broadcast: { message: string; type?: 'info' | 'warning' | 'urgent'; active?: boolean }) =>
+    fetchJson<ClinicBroadcast>(`${BASE_URL}/admin/broadcast`, {
+      method: 'POST',
+      body: JSON.stringify(broadcast)
     }),
 
   getAdminAuditLogs: () => fetchJson<AdminAuditLog[]>(`${BASE_URL}/admin/audit-logs`),

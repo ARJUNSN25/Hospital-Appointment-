@@ -6,15 +6,36 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Appointment } from '../types/index.js';
 
-export const SUPABASE_PROJECT_ID = process.env.SUPABASE_PROJECT_ID || 'kwzqkpeeaqxlpymrohkt';
-export const SUPABASE_URL = process.env.SUPABASE_URL || 'https://kwzqkpeeaqxlpymrohkt.supabase.co';
+export const SUPABASE_PROJECT_ID = process.env.SUPABASE_PROJECT_ID && !process.env.SUPABASE_PROJECT_ID.includes('your_')
+  ? process.env.SUPABASE_PROJECT_ID
+  : 'kwzqkpeeaqxlpymrohkt';
+
+export const SUPABASE_URL = process.env.SUPABASE_URL && !process.env.SUPABASE_URL.includes('your_')
+  ? process.env.SUPABASE_URL
+  : 'https://kwzqkpeeaqxlpymrohkt.supabase.co';
+
 export const SUPABASE_REST_URL = `${SUPABASE_URL}/rest/v1/`;
-export const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key';
-export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const effectiveKey = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+function resolveEffectiveKey(): string {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (serviceKey && !serviceKey.includes('your_') && !serviceKey.includes('dummy') && serviceKey.trim().length > 10) {
+    return serviceKey.trim();
+  }
 
-export const supabaseServer: SupabaseClient = createClient(SUPABASE_URL, effectiveKey, {
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  if (anonKey && !anonKey.includes('your_') && !anonKey.includes('dummy') && anonKey.trim().length > 10) {
+    return anonKey.trim();
+  }
+
+  return 'sb_publishable_iMij_v8OKiT7XXIfT2xj0A_Q08cp9i7';
+}
+
+export const SUPABASE_ANON_KEY = resolveEffectiveKey();
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('your_')
+  ? process.env.SUPABASE_SERVICE_ROLE_KEY
+  : '';
+
+export const supabaseServer: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
@@ -28,29 +49,45 @@ export async function pingSupabase(): Promise<{
   projectId: string;
   restUrl: string;
   isKeyConfigured: boolean;
+  tableReady: boolean;
 }> {
-  const isKeyConfigured = Boolean(
-    (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY) &&
-    !effectiveKey.includes('dummy')
-  );
-
   try {
-    const res = await fetch(SUPABASE_REST_URL, {
-      headers: {
-        'apikey': effectiveKey,
-        'Authorization': `Bearer ${effectiveKey}`
+    const { error, status } = await supabaseServer
+      .from('appointments')
+      .select('id')
+      .limit(1);
+
+    if (error) {
+      if (error.code === 'PGRST205') {
+        return {
+          connected: true,
+          status: 200,
+          message: `Supabase instance connected at ${SUPABASE_PROJECT_ID}! Awaiting 'public.appointments' table creation in Supabase SQL Editor.`,
+          projectId: SUPABASE_PROJECT_ID,
+          restUrl: SUPABASE_REST_URL,
+          isKeyConfigured: true,
+          tableReady: false
+        };
       }
-    });
+      return {
+        connected: false,
+        status: status || 400,
+        message: error.message || 'Error communicating with Supabase',
+        projectId: SUPABASE_PROJECT_ID,
+        restUrl: SUPABASE_REST_URL,
+        isKeyConfigured: true,
+        tableReady: false
+      };
+    }
 
     return {
-      connected: res.status < 500,
-      status: res.status,
-      message: res.status === 200
-        ? 'Supabase REST API connected and operational'
-        : `Supabase instance live at ${SUPABASE_PROJECT_ID} (HTTP ${res.status}: Ready for queries)`,
+      connected: true,
+      status: 200,
+      message: `Supabase database connected & 'public.appointments' table verified live!`,
       projectId: SUPABASE_PROJECT_ID,
       restUrl: SUPABASE_REST_URL,
-      isKeyConfigured
+      isKeyConfigured: true,
+      tableReady: true
     };
   } catch (err: any) {
     return {
@@ -59,7 +96,8 @@ export async function pingSupabase(): Promise<{
       message: err.message || 'Connection error contacting Supabase REST API',
       projectId: SUPABASE_PROJECT_ID,
       restUrl: SUPABASE_REST_URL,
-      isKeyConfigured
+      isKeyConfigured: true,
+      tableReady: false
     };
   }
 }
@@ -69,11 +107,6 @@ export async function pingSupabase(): Promise<{
  */
 export async function syncAppointmentToSupabase(apt: Appointment): Promise<{ success: boolean; error?: string }> {
   try {
-    // Check if key is available
-    if (effectiveKey.includes('dummy')) {
-      return { success: false, error: 'Supabase anon key not set in environment yet' };
-    }
-
     const { error } = await supabaseServer
       .from('appointments')
       .upsert({
@@ -98,10 +131,13 @@ export async function syncAppointmentToSupabase(apt: Appointment): Promise<{ suc
       }, { onConflict: 'booking_reference' });
 
     if (error) {
+      console.warn(`[Supabase Sync Notice] ${apt.bookingReference}: ${error.message}`);
       return { success: false, error: error.message };
     }
+    console.log(`[Supabase Sync Success] ${apt.bookingReference} persisted to Supabase database.`);
     return { success: true };
   } catch (err: any) {
+    console.warn(`[Supabase Sync Error] ${apt.bookingReference}: ${err.message}`);
     return { success: false, error: err.message };
   }
 }

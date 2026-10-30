@@ -254,6 +254,13 @@ class DatabaseStore {
   private timeOff: DoctorTimeOff[] = [...INITIAL_TIME_OFF];
   private auditLogs: AdminAuditLog[] = [];
   private mutexLock = false;
+  private broadcastMessage = {
+    message: 'Apollo Clinic Basaveshwar Nagar OPD is active. Live queue management and walk-in consultation open.',
+    type: 'info' as 'info' | 'warning' | 'urgent',
+    active: true,
+    updatedAt: new Date().toISOString(),
+    updatedBy: 'Arjun'
+  };
 
   constructor() {
     this.seedInitialAppointments();
@@ -344,6 +351,25 @@ class DatabaseStore {
     this.services[idx] = { ...this.services[idx], ...updates };
     this.addAuditLog('UPDATE_SERVICE', 'SERVICE', id, adminUser, `Updated service ${this.services[idx].name}`);
     return { ...this.services[idx] };
+  }
+
+  addService(service: Partial<ClinicService>, adminUser = 'admin'): ClinicService {
+    const newService: ClinicService = {
+      id: service.id || `srv-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: service.name || 'New Diagnostic Service',
+      specialityId: service.specialityId || 'spec-general-medicine',
+      specialityName: service.specialityName || 'General & Internal Medicine',
+      description: service.description || '',
+      durationMinutes: service.durationMinutes || 20,
+      price: service.price || 500,
+      isPriceConfirmed: true,
+      category: service.category || 'diagnostic',
+      isActive: service.isActive !== undefined ? service.isActive : true,
+      preparationInstructions: service.preparationInstructions || ''
+    };
+    this.services.push(newService);
+    this.addAuditLog('ADD_SERVICE', 'SERVICE', newService.id, adminUser, `Added service ${newService.name}`);
+    return newService;
   }
 
   // Availability calculation
@@ -720,6 +746,13 @@ class DatabaseStore {
     }
     const hourlyDistribution = Object.entries(hourMap).map(([hour, count]) => ({ hour, count }));
 
+    const waitingCount = this.appointments.filter(a => a.status === 'waiting').length;
+    const inConsultationCount = this.appointments.filter(a => a.status === 'in-consultation').length;
+    const noShowCount = this.appointments.filter(a => a.status === 'no-show').length;
+    const todayRevenueEstimated = todayApts
+      .filter(a => a.status !== 'cancelled' && a.status !== 'rejected')
+      .reduce((sum, a) => sum + (a.fee || 0), 0);
+
     // Doctor workload / roster capacity
     const doctorWorkload = this.doctors.map(d => {
       const booked = this.appointments.filter(a => a.doctorId === d.id && a.status !== 'cancelled').length;
@@ -728,7 +761,8 @@ class DatabaseStore {
         doctorName: d.name,
         speciality: d.specialityName,
         bookedCount: booked,
-        active: d.active
+        active: d.active,
+        opdStatus: d.opdStatus || (d.active ? 'available' : 'off-duty')
       };
     }).sort((a, b) => b.bookedCount - a.bookedCount);
 
@@ -739,7 +773,11 @@ class DatabaseStore {
       confirmedAppointments: confirmed,
       cancelledAppointments: cancelled,
       completedAppointments: completed,
+      waitingCount,
+      inConsultationCount,
+      noShowCount,
       revenueEstimated,
+      todayRevenueEstimated,
       revenueOnline,
       revenueCash,
       onlineCount: onlineApts.length,
@@ -750,6 +788,22 @@ class DatabaseStore {
       hourlyDistribution,
       doctorWorkload
     };
+  }
+
+  getBroadcast() {
+    return { ...this.broadcastMessage };
+  }
+
+  updateBroadcast(data: { message: string; type?: 'info' | 'warning' | 'urgent'; active?: boolean }, adminUser = 'Arjun') {
+    this.broadcastMessage = {
+      message: data.message,
+      type: data.type || this.broadcastMessage.type,
+      active: data.active !== undefined ? data.active : this.broadcastMessage.active,
+      updatedAt: new Date().toISOString(),
+      updatedBy: adminUser
+    };
+    this.addAuditLog('UPDATE_BROADCAST', 'CLINIC', 'broadcast', adminUser, `Broadcast notice updated: ${data.message.slice(0, 40)}`);
+    return { ...this.broadcastMessage };
   }
 
   addAuditLog(action: string, resourceType: string, resourceId: string, performedBy: string, details: string) {

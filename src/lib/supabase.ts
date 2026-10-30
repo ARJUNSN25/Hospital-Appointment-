@@ -21,11 +21,10 @@ const getEnvVar = (key: string, fallback = ''): string => {
 };
 
 export const resolvedSupabaseUrl = getEnvVar('VITE_SUPABASE_URL') || getEnvVar('SUPABASE_URL') || SUPABASE_URL;
-export const resolvedSupabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key';
+export const resolvedSupabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('SUPABASE_ANON_KEY') || 'sb_publishable_iMij_v8OKiT7XXIfT2xj0A_Q08cp9i7';
 
 export const isSupabaseConfigured = Boolean(
-  (getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('SUPABASE_ANON_KEY')) &&
-  !resolvedSupabaseAnonKey.includes('dummy')
+  resolvedSupabaseAnonKey && !resolvedSupabaseAnonKey.includes('dummy')
 );
 
 // Create Supabase Client instance
@@ -48,31 +47,27 @@ export async function checkSupabaseConnection(): Promise<{
   endpoint: string;
 }> {
   try {
-    const res = await fetch(`${SUPABASE_REST_URL}`, {
-      method: 'GET',
-      headers: {
-        'apikey': resolvedSupabaseAnonKey,
-        'Authorization': `Bearer ${resolvedSupabaseAnonKey}`
-      }
-    });
+    const { error, status } = await supabase
+      .from('appointments')
+      .select('id')
+      .limit(1);
 
-    // A 200 or 401 or OpenAPI schema return confirms the Supabase project server is alive
-    if (res.status === 200 || res.status === 401 || res.status === 404) {
+    if (error && error.code !== 'PGRST205') {
       return {
-        connected: true,
-        status: res.status,
-        message: res.status === 200 
-          ? 'Connected to Supabase REST API successfully'
-          : `Supabase instance live at ${SUPABASE_PROJECT_ID} (HTTP ${res.status}: Ready for anon key / tables)`,
+        connected: false,
+        status: status || 400,
+        message: error.message || 'Supabase error',
         projectId: SUPABASE_PROJECT_ID,
         endpoint: SUPABASE_REST_URL
       };
     }
 
     return {
-      connected: false,
-      status: res.status,
-      message: `Supabase returned HTTP ${res.status}`,
+      connected: true,
+      status: 200,
+      message: error?.code === 'PGRST205'
+        ? 'Supabase backend connected (Table awaiting setup in SQL editor)'
+        : 'Supabase backend connected & synchronized',
       projectId: SUPABASE_PROJECT_ID,
       endpoint: SUPABASE_REST_URL
     };
@@ -80,7 +75,7 @@ export async function checkSupabaseConnection(): Promise<{
     return {
       connected: false,
       status: 0,
-      message: err.message || 'Network error pinging Supabase endpoint',
+      message: err.message || 'Unable to connect to Supabase endpoint',
       projectId: SUPABASE_PROJECT_ID,
       endpoint: SUPABASE_REST_URL
     };

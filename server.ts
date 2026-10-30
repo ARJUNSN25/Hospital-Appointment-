@@ -403,8 +403,26 @@ async function startServer() {
     res.json({ success: true, data: updated });
   });
 
+  apiRouter.post('/admin/services', (req, res) => {
+    const newService = dbStore.addService(req.body);
+    res.status(201).json({ success: true, data: newService });
+  });
+
   apiRouter.patch('/admin/clinic-settings', (req, res) => {
     const updated = dbStore.updateClinicConfig(req.body);
+    res.json({ success: true, data: updated });
+  });
+
+  apiRouter.get('/broadcast', (req, res) => {
+    res.json({ success: true, data: dbStore.getBroadcast() });
+  });
+
+  apiRouter.post('/admin/broadcast', (req, res) => {
+    const { message, type, active } = req.body;
+    if (!message) {
+      return res.status(400).json({ success: false, error: 'Broadcast message is required' });
+    }
+    const updated = dbStore.updateBroadcast({ message, type, active }, 'Arjun');
     res.json({ success: true, data: updated });
   });
 
@@ -533,7 +551,7 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Apollo Clinic Platform] Live server running at http://0.0.0.0:${PORT}`);
   });
